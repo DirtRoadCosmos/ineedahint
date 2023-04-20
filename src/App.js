@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import Hint from './Hint'
+import "./index.css";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const App = () => {
   const [ hints, setHints ] = useState([])
@@ -26,13 +28,24 @@ const App = () => {
   }
 
   return (
-    <div>
+    
+    <div class="container">
+
       <form onSubmit={requestHint}>
-        <input placeholder="What are you trying to do?" defaultValue={prompt} onChange={handlePromptChange} />
-        <input placeholder="What do you have so far?" defaultValue={progress} onChange={handleProgressChange} />
-        <button type="submit">request hint</button>
+      <div class="form-group mt-4">
+    <label for="problem">What are you trying to do?</label>
+    <textarea class="form-control" id="problem" placeholder="write a few words, or copy/paste a problem prompt" />
+  </div>
+  <div class="form-group mt-4">
+    <label for="sofar">What have you tried so far?</label>
+    <textarea class="form-control" id="sofar" placeholder="copy/paste your current code or text" />
+  </div>
+  <div class="form-group mt-4">
+    <button type="submit" class="btn btn-primary">request hint</button>
+  </div>
+        
       </form>
-      <ul>
+      <ul class="mt-4">
         {hints.map(hint => 
           <Hint key={hint.id} hint={hint} />
         )}
