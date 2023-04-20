@@ -1,7 +1,12 @@
 const Hint = (props) => {
     const hint = props.hint
     return (
-        <li>{hint.id}: {hint.text}</li>
+        <div className="card mt-2">
+            <div className="card-body">
+                <h5 className="card-title">Hint #{hint.id + 1}</h5>
+                <p className="card-text">{hint.text}</p>
+            </div>
+        </div>
     )
 }
 

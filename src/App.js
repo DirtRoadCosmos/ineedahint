@@ -4,6 +4,7 @@ import Hint from './Hint'
 import "./index.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import axios from 'axios';
+const fake = true;
 
 const App = () => {
   const [ hints, setHints ] = useState([])
@@ -27,25 +28,31 @@ const App = () => {
     event.preventDefault();
     setIsLoading(true);
 
+    let response;
     try {
-      const response = await axios.post('https://ineedahint-api.onrender.com/get-hints', {
-        problemPrompt: prompt,
-        userCode: progress,
-        otherInfo: ''
-      });
+      if (fake) {
+        response = { data: { hints: [
+              'ooookkkaaaay',
+              'go sox',
+              'oh my',
+              'whatevs'
+            ]}}
+          
+      } else {
+        response = await axios.post('https://ineedahint-api.onrender.com/get-hints', {
+          problemPrompt: prompt,
+          userCode: progress,
+          otherInfo: ''
+        });
+      }
+    } catch (error) {
+        console.error(error);
+        setHints([{id: 0, text: 'Error fetching hint'}]);
+    } finally {
+      console.log(response)
       console.log(`got response: ${response.data.hints}`)
       setHints(response.data.hints.map((hint, index) => ({id: index, text: hint})));
-    //       setHints([
-    //   {id: 1, text: 'ooookkkaaaay'},
-    //   {id: 2, text: 'go sox'},
-    //   {id: 3, text: 'oh my'},
-    //   {id: 4, text: 'whatevs'}
-    // ])
-    } catch (error) {
-      console.error(error);
-      setHints([{id: 0, text: 'Error fetching hint'}]);
-    } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   }
 
@@ -61,6 +68,11 @@ const App = () => {
     setCurrentHintIndex((prevIndex) => prevIndex + 1);
   };
 
+  const startOver = () => {
+    setHints([])
+    setCurrentHintIndex(0)
+  }
+
   return (
     
     <div className="container">
@@ -75,38 +87,35 @@ const App = () => {
     <textarea className="form-control" id="sofar" placeholder="copy/paste your current code or text" />
   </div>
   <div className="form-group mt-4">
-    <button disabled={isLoading} type="submit" className="btn btn-primary">{isLoading ? 'Loading...' : 'Click to Load'}</button>
-  </div>
-        
-
-      {hints.length > 0 && (
-        <div className="hints-container">
-          <div className="hint-item">
-            <div className="hint-container">
-              <p>{hints[currentHintIndex].text}</p>
-              {currentHintIndex < hints.length - 1 && (
-                <Button variant="primary" onClick={handleNextHint}>
+    {hints.length < 1 ? (
+<button disabled={isLoading} type="submit" className="btn btn-primary">{isLoading ? 'Loading...' : 'Click to Load'}</button>
+    ) : (
+      currentHintIndex < hints.length - 1 ?
+(<Button variant="primary" onClick={handleNextHint}>
                   Next Hint
                 </Button>
-              )}
-            </div>
-          </div>
+    ) : (
+<Button variant="primary" onClick={startOver}>
+                  Start Over
+                </Button>
+    )
+    )
+    }
+  </div>
+        
+  {isLoading && <Spinner animation="grow" role="status" variant="primary" />}
+      {hints.length > 0 && (
+        <div className="hints-container">
+          {hints.filter(hintItem => hintItem.id <= currentHintIndex).sort((a, b) => b.id - a.id).map(hint => 
+          <Hint key={hint.id} hint={hint} />
+        )}
+
         </div>
       )}
 
       </form>
-      {/* <ul className="mt-4">
-        {hints.map(hint => 
-          <Hint key={hint.id} hint={hint} />
-        )}
-      </ul> */}
 
-      <Modal show={isLoading} backdrop="static" keyboard={false}>
-        <Modal.Body>
-          <Spinner animation="border" role="status" variant="primary" />
-          <div className="sr-only mt-2">Loading...</div>
-        </Modal.Body>
-      </Modal>
+          
 
 
     </div>
