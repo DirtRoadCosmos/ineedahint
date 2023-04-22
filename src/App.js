@@ -1,121 +1,226 @@
-import { useState } from "react";
-import { Button, Spinner, Modal } from "react-bootstrap";
+import { useState, useEffect, StrictMode } from "react";
 import Hint from "./Hint";
 import "./index.css";
-import "bootstrap/dist/css/bootstrap.min.css";
+import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
+import {
+  MainContainer,
+  ChatContainer,
+  MessageList,
+  Message,
+  MessageInput,
+  TypingIndicator,
+  Button,
+  InputToolbox,
+} from "@chatscope/chat-ui-kit-react";
 import axios from "axios";
-const fake = true;
+const fake = false;
 
 const App = () => {
-  const [hints, setHints] = useState([]);
-  const [prompt, setPrompt] = useState("");
-  const [progress, setProgress] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [messages, setMessages] = useState([
+    {
+      message: "Hello! I give hints but not answers.",
+      sentTime: "just now",
+      sender: "Rainbow",
+    },
+    {
+      message: "What are you trying to do?",
+      sentTime: "just now",
+      sender: "Rainbow",
+    },
+  ]);
+  const [initialData, setInitialData] = useState({});
+  const [needInitialData, setNeedInitialData] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [showButtons, setShowButtons] = useState(false);
   const [currentHintIndex, setCurrentHintIndex] = useState(0);
 
-  const requestHint = async (event) => {
-    event.preventDefault();
-    setIsLoading(true);
+  useEffect(() => {
+    if (
+      !needInitialData &&
+      messages.length > 0 &&
+      messages[messages.length - 1].message === "ok. lemme think a minute..."
+    ) {
+      setIsWaiting(true);
+      processMessage(messages);
+    }
+  }, [messages, needInitialData]);
 
-    let response;
-    try {
-      if (fake) {
-        response = {
-          data: { hints: ["ooookkkaaaay", "go sox", "oh my", "whatevs"] },
-        };
-      } else {
-        response = await axios.post(
-          "https://ineedahint-api.onrender.com/get-hints",
-          {
-            problemPrompt: prompt,
-            userCode: progress,
-            otherInfo: "",
-          }
-        );
-      }
-    } catch (error) {
-      console.error(error);
-      setHints([{ id: 0, text: "Error fetching hint" }]);
-    } finally {
-      console.log(response);
-      console.log(`got response: ${response.data.hints}`);
-      setHints(
-        response.data.hints.map((hint, index) => ({ id: index, text: hint }))
-      );
-      setIsLoading(false);
+  const handleSend = async (message) => {
+    setIsWaiting(true);
+    if (needInitialData) {
+      await populateInitialData(message);
+    } else {
+      const newMessage = {
+        message,
+        direction: "outgoing",
+        sender: "user",
+      };
+      const newMessages = [...messages, newMessage];
+      setMessages(newMessages);
+      await processMessage(newMessages);
     }
   };
 
-  const handlePromptChange = (event) => {
-    setPrompt(event.target.value);
+  const populateInitialData = async (message) => {
+    let reply;
+    if (!initialData.problem) {
+      const newInitialData = {
+        problem: message,
+      };
+      setInitialData(newInitialData);
+      reply = {
+        message: "got it. what you have tried so far?",
+        direction: "incoming",
+        sentTime: "just now",
+        sender: "Rainbow",
+      };
+    } else if (!initialData.tried) {
+      const newInitialData = {
+        problem: initialData.problem,
+        tried: message,
+      };
+      setInitialData(newInitialData);
+      reply = {
+        message: "nice start. anything else I should know?",
+        direction: "incoming",
+        sentTime: "just now",
+        sender: "Rainbow",
+      };
+    } else {
+      setNeedInitialData(false);
+      reply = {
+        message: "ok. lemme think a minute...",
+        direction: "incoming",
+        sentTime: "just now",
+        sender: "Rainbow",
+      };
+    }
+    const newMessage = {
+      message,
+      direction: "outgoing",
+      sender: "user",
+    };
+    const newMessages = [...messages, newMessage, reply];
+    setMessages(newMessages);
+    setIsWaiting(false);
   };
 
-  const handleProgressChange = (event) => {
-    setProgress(event.target.value);
-  };
+  async function processMessage(chatMessages) {
+    let typingTimer;
+    const randomTypingEffect = () => {
+      const randomTimeout = Math.floor(Math.random() * 1000) + 500; // Random timeout between 500ms and 1500ms
+      setIsTyping((prevIsTyping) => !prevIsTyping);
+      typingTimer = setTimeout(randomTypingEffect, randomTimeout);
+    };
 
-  const handleNextHint = () => {
-    setCurrentHintIndex((prevIndex) => prevIndex + 1);
-  };
+    typingTimer = setTimeout(randomTypingEffect, 500);
+    let response;
 
-  const startOver = () => {
-    setHints([]);
-    setCurrentHintIndex(0);
-  };
+    try {
+      if (fake) {
+        response = {
+          data: { replyList: ["ooookkkaaaay", "go sox", "oh my", "whatevs"] },
+        };
+      } else {
+        response = await axios.post(
+          // "https://ineedahint-api.onrender.com/get-reply",
+          "http://localhost:5000/get-reply",
+          chatMessages
+        );
+      }
+    } catch (error) {
+      response = { data: "error: no response received!" };
+      console.error(error.message);
+      const newMessage = {
+        message: error.message,
+        direction: "incoming",
+        sentTime: "just now",
+        sender: "Rainbow",
+      };
+      const newMessages = [...chatMessages, newMessage];
+      setMessages(newMessages);
+      setIsWaiting(false);
+    } finally {
+      console.log(response.data);
+      const replies = response.data.replyList.map((reply, index) => ({
+        id: index,
+        text: reply,
+      }));
+      console.log(response);
+      const newMessage = {
+        message: replies[0].text,
+        direction: "incoming",
+        sentTime: "just now",
+        sender: "Rainbow",
+      };
+      console.log("logging messages, then chat messages");
+      console.log(messages, chatMessages);
+      const newMessages = [...chatMessages, newMessage];
+      setMessages(newMessages);
+      setIsWaiting(false);
+      clearTimeout(typingTimer); // Clear the random typing effect timeout
+      setIsTyping(false);
+      setShowButtons(true);
+    }
+  }
 
   return (
-    <div className="container">
-      <form onSubmit={requestHint}>
-        <div className="form-group mt-4">
-          <label htmlFor="problem">What are you trying to do?</label>
-          <textarea
-            className="form-control"
-            id="problem"
-            placeholder="write a few words, or copy/paste a problem prompt"
-          />
-        </div>
-        <div className="form-group mt-4">
-          <label htmlFor="sofar">What have you tried so far?</label>
-          <textarea
-            className="form-control"
-            id="sofar"
-            placeholder="copy/paste your current code or text"
-          />
-        </div>
-        <div className="form-group mt-4">
-          {hints.length < 1 ? (
-            <button
-              disabled={isLoading}
-              type="submit"
-              className="btn btn-primary"
-            >
-              {isLoading ? "Loading..." : "Click to Load"}
-            </button>
-          ) : currentHintIndex < hints.length - 1 ? (
-            <Button variant="primary" onClick={handleNextHint}>
-              Next Hint
-            </Button>
-          ) : (
-            <Button variant="primary" onClick={startOver}>
-              Start Over
-            </Button>
-          )}
-        </div>
-
-        {isLoading && (
-          <Spinner animation="grow" role="status" variant="primary" />
-        )}
-        {hints.length > 0 && (
-          <div className="hints-container">
-            {hints
-              .filter((hintItem) => hintItem.id <= currentHintIndex)
-              .sort((a, b) => b.id - a.id)
-              .map((hint) => (
-                <Hint key={hint.id} hint={hint} />
-              ))}
-          </div>
-        )}
-      </form>
+    <div className="App">
+      <div style={{ position: "relative", height: "800px", width: "700px" }}>
+        <StrictMode>
+          <MainContainer>
+            <ChatContainer style={{ display: "flex", flexDirection: "column" }}>
+              <MessageList
+                scrollBehavior="smooth"
+                typingIndicator={
+                  isTyping ? (
+                    <TypingIndicator content="ChatGPT is typing" />
+                  ) : null
+                }
+              >
+                {messages.map((message, i) => {
+                  return <Message key={i} model={message} />;
+                })}
+              </MessageList>
+              <div as="MessageInput" style={{ display: "flex", flexGrow: "1" }}>
+                {showButtons && (
+                  <>
+                    <Button
+                      border
+                      style={{ margin: "10px" }}
+                      onClick={() => {
+                        // Your button's onClick handler
+                      }}
+                    >
+                      Another Hint
+                    </Button>
+                    <Button
+                      border
+                      style={{ margin: "10px" }}
+                      onClick={() => {
+                        setShowButtons(false);
+                      }}
+                    >
+                      I want to ask a follow-up
+                    </Button>
+                  </>
+                )}
+                {!showButtons && (
+                  <MessageInput
+                    autoFocus
+                    attachButton={false}
+                    placeholder={isWaiting ? "" : "Type message here"}
+                    onSend={handleSend}
+                    disabled={isWaiting}
+                    style={{ flexGrow: 1 }}
+                  />
+                )}
+              </div>
+            </ChatContainer>
+          </MainContainer>
+        </StrictMode>
+      </div>
     </div>
   );
 };
