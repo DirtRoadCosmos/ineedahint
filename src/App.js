@@ -126,8 +126,8 @@ const App = () => {
         };
       } else {
         response = await axios.post(
-          // "https://ineedahint-api.onrender.com/get-reply",
-          "http://localhost:5000/get-reply",
+          "https://ineedahint-api.onrender.com/get-reply",
+          // "http://localhost:5000/get-reply",
           chatMessages
         );
       }
