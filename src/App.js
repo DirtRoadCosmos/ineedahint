@@ -34,6 +34,7 @@ const App = () => {
   const [isWaiting, setIsWaiting] = useState(false);
   const [showButtons, setShowButtons] = useState(false);
   const [currentHintIndex, setCurrentHintIndex] = useState(0);
+  const [hints, setHints] = useState([]);
 
   useEffect(() => {
     if (
@@ -109,7 +110,8 @@ const App = () => {
   async function processMessage(chatMessages) {
     let typingTimer;
     const randomTypingEffect = () => {
-      const randomTimeout = Math.floor(Math.random() * 1000) + 500; // Random timeout between 500ms and 1500ms
+      const minOffTime = isTyping ? 0 : 2000;
+      const randomTimeout = Math.floor(Math.random() * 800) + minOffTime;
       setIsTyping((prevIsTyping) => !prevIsTyping);
       typingTimer = setTimeout(randomTypingEffect, randomTimeout);
     };
@@ -147,6 +149,7 @@ const App = () => {
         id: index,
         text: reply,
       }));
+      setHints(replies);
       console.log(response);
       const newMessage = {
         message: replies[0].text,
@@ -154,12 +157,10 @@ const App = () => {
         sentTime: "just now",
         sender: "Rainbow",
       };
-      console.log("logging messages, then chat messages");
-      console.log(messages, chatMessages);
       const newMessages = [...chatMessages, newMessage];
       setMessages(newMessages);
       setIsWaiting(false);
-      clearTimeout(typingTimer); // Clear the random typing effect timeout
+      clearTimeout(typingTimer);
       setIsTyping(false);
       setShowButtons(true);
     }
@@ -190,11 +191,33 @@ const App = () => {
                       border
                       style={{ margin: "10px" }}
                       onClick={() => {
-                        // Your button's onClick handler
+                        if (currentHintIndex < hints.length - 1) {
+                          setCurrentHintIndex(currentHintIndex + 1);
+                          const newMessage = {
+                            message: hints[currentHintIndex + 1].text,
+                            direction: "incoming",
+                            sentTime: "just now",
+                            sender: "Rainbow",
+                          };
+                          const newMessages = [...messages, newMessage];
+                          setMessages(newMessages);
+                        } else {
+                          const newMessage = {
+                            message:
+                              "Ask me a question to guide my next set of hints for you.",
+                            direction: "incoming",
+                            sentTime: "just now",
+                            sender: "Rainbow",
+                          };
+                          const newMessages = [...messages, newMessage];
+                          setMessages(newMessages);
+                          setShowButtons(false);
+                        }
                       }}
                     >
                       Another Hint
                     </Button>
+
                     <Button
                       border
                       style={{ margin: "10px" }}
