@@ -1,5 +1,5 @@
-import { useState, useEffect, StrictMode } from "react";
-import Hint from "./Hint";
+import { useState, useEffect, useCallback, useRef, StrictMode } from "react";
+// import Hint from "./Hint";
 import "./index.css";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 import {
@@ -10,7 +10,7 @@ import {
   MessageInput,
   TypingIndicator,
   Button,
-  InputToolbox,
+  // InputToolbox,
 } from "@chatscope/chat-ui-kit-react";
 import axios from "axios";
 const fake = false;
@@ -35,6 +35,73 @@ const App = () => {
   const [showButtons, setShowButtons] = useState(false);
   const [currentHintIndex, setCurrentHintIndex] = useState(0);
   const [hints, setHints] = useState([]);
+  const isTypingRef = useRef(isTyping);
+
+  useEffect(() => {
+    isTypingRef.current = isTyping;
+  }, [isTyping]);
+
+  const processMessage = useCallback(
+    async (chatMessages) => {
+      let typingTimer;
+      const randomTypingEffect = () => {
+        const minOffTime = isTypingRef.current ? 0 : 2000;
+        const randomTimeout = Math.floor(Math.random() * 800) + minOffTime;
+        setIsTyping((prevIsTyping) => !prevIsTyping);
+        typingTimer = setTimeout(randomTypingEffect, randomTimeout);
+      };
+
+      typingTimer = setTimeout(randomTypingEffect, 500);
+      let response;
+
+      try {
+        if (fake) {
+          response = {
+            data: { replyList: ["ooookkkaaaay", "go sox", "oh my", "whatevs"] },
+          };
+        } else {
+          response = await axios.post(
+            "https://ineedahint-api.onrender.com/get-reply",
+            // "http://localhost:5000/get-reply",
+            chatMessages
+          );
+        }
+      } catch (error) {
+        response = { data: "error: no response received!" };
+        console.error(error.message);
+        const newMessage = {
+          message: error.message,
+          direction: "incoming",
+          sentTime: "just now",
+          sender: "Rainbow",
+        };
+        const newMessages = [...chatMessages, newMessage];
+        setMessages(newMessages);
+        setIsWaiting(false);
+      } finally {
+        console.log(response.data);
+        const replies = response.data.replyList.map((reply, index) => ({
+          id: index,
+          text: reply,
+        }));
+        setHints(replies);
+        console.log(response);
+        const newMessage = {
+          message: replies[0].text,
+          direction: "incoming",
+          sentTime: "just now",
+          sender: "Rainbow",
+        };
+        const newMessages = [...chatMessages, newMessage];
+        setMessages(newMessages);
+        setIsWaiting(false);
+        clearTimeout(typingTimer);
+        setIsTyping(false);
+        setShowButtons(true);
+      }
+    },
+    [isTypingRef]
+  );
 
   useEffect(() => {
     if (
@@ -45,7 +112,7 @@ const App = () => {
       setIsWaiting(true);
       processMessage(messages);
     }
-  }, [messages, needInitialData]);
+  }, [messages, needInitialData, processMessage]);
 
   const handleSend = async (message) => {
     setIsWaiting(true);
@@ -106,65 +173,6 @@ const App = () => {
     setMessages(newMessages);
     setIsWaiting(false);
   };
-
-  async function processMessage(chatMessages) {
-    let typingTimer;
-    const randomTypingEffect = () => {
-      const minOffTime = isTyping ? 0 : 2000;
-      const randomTimeout = Math.floor(Math.random() * 800) + minOffTime;
-      setIsTyping((prevIsTyping) => !prevIsTyping);
-      typingTimer = setTimeout(randomTypingEffect, randomTimeout);
-    };
-
-    typingTimer = setTimeout(randomTypingEffect, 500);
-    let response;
-
-    try {
-      if (fake) {
-        response = {
-          data: { replyList: ["ooookkkaaaay", "go sox", "oh my", "whatevs"] },
-        };
-      } else {
-        response = await axios.post(
-          "https://ineedahint-api.onrender.com/get-reply",
-          // "http://localhost:5000/get-reply",
-          chatMessages
-        );
-      }
-    } catch (error) {
-      response = { data: "error: no response received!" };
-      console.error(error.message);
-      const newMessage = {
-        message: error.message,
-        direction: "incoming",
-        sentTime: "just now",
-        sender: "Rainbow",
-      };
-      const newMessages = [...chatMessages, newMessage];
-      setMessages(newMessages);
-      setIsWaiting(false);
-    } finally {
-      console.log(response.data);
-      const replies = response.data.replyList.map((reply, index) => ({
-        id: index,
-        text: reply,
-      }));
-      setHints(replies);
-      console.log(response);
-      const newMessage = {
-        message: replies[0].text,
-        direction: "incoming",
-        sentTime: "just now",
-        sender: "Rainbow",
-      };
-      const newMessages = [...chatMessages, newMessage];
-      setMessages(newMessages);
-      setIsWaiting(false);
-      clearTimeout(typingTimer);
-      setIsTyping(false);
-      setShowButtons(true);
-    }
-  }
 
   return (
     <div className="App">
