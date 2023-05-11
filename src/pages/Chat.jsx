@@ -1,6 +1,5 @@
+import UserMenu from "../components/UserMenu";
 import { useState, useEffect, useCallback, useRef, StrictMode } from "react";
-// import Hint from "./Hint";
-import "./index.css";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 import {
   MainContainer,
@@ -10,15 +9,24 @@ import {
   MessageInput,
   TypingIndicator,
   Button,
-  // InputToolbox,
+  Sidebar,
+  Search,
+  ConversationList,
+  Conversation,
+  ConversationHeader,
+  InfoButton,
+  Avatar,
+  ExpansionPanel,
 } from "@chatscope/chat-ui-kit-react";
 import axios from "axios";
+import zoeIco from "../images/zoe.svg";
 const fake = false;
 
-const App = () => {
+const Chat = ({ user }) => {
+  console.log(user);
   const [messages, setMessages] = useState([
     {
-      message: "Hello! I give hints but not answers.",
+      message: `Hello ${user.name.givenName}! I give hints but not answers.`,
       sentTime: "just now",
       sender: "Rainbow",
     },
@@ -61,8 +69,8 @@ const App = () => {
           };
         } else {
           response = await axios.post(
-            "https://ineedahint-api.onrender.com/get-reply",
-            // "http://localhost:5000/get-reply",
+            // "https://ineedahint-api.onrender.com/get-reply",
+            "http://localhost:5000/get-reply",
             chatMessages
           );
         }
@@ -175,85 +183,131 @@ const App = () => {
   };
 
   return (
-    <div className="App">
-      <div style={{ position: "relative", height: "800px", width: "700px" }}>
-        <StrictMode>
-          <MainContainer>
-            <ChatContainer style={{ display: "flex", flexDirection: "column" }}>
-              <MessageList
-                scrollBehavior="smooth"
-                typingIndicator={
-                  isTyping ? (
-                    <TypingIndicator content="ChatGPT is typing" />
-                  ) : null
-                }
+    <div style={{ height: "calc(100vh - 18px)", overflow: "auto" }}>
+      <StrictMode>
+        <MainContainer>
+          <Sidebar position="left" scrollable={false}>
+            <Search placeholder="Search..." />
+            <ConversationList>
+              <Conversation
+                name="Lilly"
+                lastSenderName="Lilly"
+                info="Yes i can do it for you"
               >
-                {messages.map((message, i) => {
-                  return <Message key={i} model={message} />;
-                })}
-              </MessageList>
-              <div as="MessageInput" style={{ display: "flex", flexGrow: "1" }}>
-                {showButtons && (
-                  <>
-                    <Button
-                      border
-                      style={{ margin: "10px" }}
-                      onClick={() => {
-                        if (currentHintIndex < hints.length - 1) {
-                          setCurrentHintIndex(currentHintIndex + 1);
-                          const newMessage = {
-                            message: hints[currentHintIndex + 1].text,
-                            direction: "incoming",
-                            sentTime: "just now",
-                            sender: "Rainbow",
-                          };
-                          const newMessages = [...messages, newMessage];
-                          setMessages(newMessages);
-                        } else {
-                          const newMessage = {
-                            message:
-                              "Ask me a question to guide my next set of hints for you.",
-                            direction: "incoming",
-                            sentTime: "just now",
-                            sender: "Rainbow",
-                          };
-                          const newMessages = [...messages, newMessage];
-                          setMessages(newMessages);
-                          setShowButtons(false);
-                        }
-                      }}
-                    >
-                      Another Hint
-                    </Button>
+                <Avatar src={zoeIco} name="Lilly" status="available" />
+              </Conversation>
 
-                    <Button
-                      border
-                      style={{ margin: "10px" }}
-                      onClick={() => {
+              <Conversation
+                name="Joe"
+                lastSenderName="Joe"
+                info="Yes i can do it for you"
+              >
+                <Avatar src={zoeIco} name="Joe" status="dnd" />
+              </Conversation>
+
+              <Conversation
+                name="Zoe"
+                lastSenderName="Zoe"
+                info="Yes i can do it for you"
+                active
+              >
+                <Avatar src={zoeIco} name="Zoe" status="dnd" />
+              </Conversation>
+
+              <Conversation
+                name="Patrik"
+                lastSenderName="Patrik"
+                info="Yes i can do it for you"
+              >
+                <Avatar src={zoeIco} name="Patrik" status="invisible" />
+              </Conversation>
+            </ConversationList>
+          </Sidebar>
+          <ChatContainer>
+            <ConversationHeader>
+              <Avatar src={zoeIco} name="Zoe" />
+              <ConversationHeader.Content
+                userName="Zoe"
+                info="Active 10 mins ago"
+              />
+              <ConversationHeader.Actions>
+                <UserMenu user={user} />
+              </ConversationHeader.Actions>
+            </ConversationHeader>
+            <MessageList
+              scrollBehavior="smooth"
+              style={{ flex: 1, overflowY: "auto" }}
+              typingIndicator={
+                isTyping ? (
+                  <TypingIndicator content="ChatGPT is typing" />
+                ) : null
+              }
+            >
+              {messages.map((message, i) => {
+                return <Message key={i} model={message} />;
+              })}
+            </MessageList>
+            <div as="MessageInput">
+              {showButtons && (
+                <>
+                  <Button
+                    border
+                    style={{ margin: "10px" }}
+                    onClick={() => {
+                      if (currentHintIndex < hints.length - 1) {
+                        setCurrentHintIndex(currentHintIndex + 1);
+                        const newMessage = {
+                          message: hints[currentHintIndex + 1].text,
+                          direction: "incoming",
+                          sentTime: "just now",
+                          sender: "Rainbow",
+                        };
+                        const newMessages = [...messages, newMessage];
+                        setMessages(newMessages);
+                      } else {
+                        const newMessage = {
+                          message:
+                            "Ask me a question to guide my next set of hints for you.",
+                          direction: "incoming",
+                          sentTime: "just now",
+                          sender: "Rainbow",
+                        };
+                        const newMessages = [...messages, newMessage];
+                        setMessages(newMessages);
                         setShowButtons(false);
-                      }}
-                    >
-                      I want to ask a follow-up
-                    </Button>
-                  </>
-                )}
-                {!showButtons && (
-                  <MessageInput
-                    autoFocus
-                    attachButton={false}
-                    placeholder={isWaiting ? "" : "Type message here"}
-                    onSend={handleSend}
-                    disabled={isWaiting}
-                    style={{ flexGrow: 1 }}
-                  />
-                )}
-              </div>
-            </ChatContainer>
-          </MainContainer>
-        </StrictMode>
-      </div>
+                      }
+                    }}
+                  >
+                    Another Hint
+                  </Button>
+
+                  <Button
+                    border
+                    style={{ margin: "10px" }}
+                    onClick={() => {
+                      setShowButtons(false);
+                    }}
+                  >
+                    I want to ask a follow-up
+                  </Button>
+                </>
+              )}
+              {!showButtons && (
+                <MessageInput
+                  autoFocus
+                  attachButton={false}
+                  placeholder={isWaiting ? "" : "Type message here"}
+                  onSend={handleSend}
+                  disabled={isWaiting}
+                  style={{ flexGrow: 1 }}
+                />
+              )}
+            </div>
+          </ChatContainer>
+        </MainContainer>
+      </StrictMode>
     </div>
   );
 };
 
-export default App;
+export default Chat;
