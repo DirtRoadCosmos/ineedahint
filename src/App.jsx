@@ -7,12 +7,14 @@ import Header from "./components/Header";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const App = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
     const getUser = () => {
-      fetch("http://localhost:5000/api/auth/login/success", {
+      fetch(`${API_URL}/api/auth/login/success`, {
         method: "GET",
         credentials: "include",
         headers: {

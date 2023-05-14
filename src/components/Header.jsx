@@ -10,6 +10,8 @@ import {
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import { useNavigate } from "react-router-dom";
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const Header = ({ user, setUser }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const open = Boolean(anchorEl);
@@ -24,7 +26,7 @@ const Header = ({ user, setUser }) => {
   };
 
   const logout = () => {
-    window.open("http://localhost:5000/api/auth/logout", "_self");
+    window.open(`${API_URL}/api/auth/logout`, "_self");
     setUser(null);
   };
 

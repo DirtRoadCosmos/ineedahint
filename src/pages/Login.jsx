@@ -1,8 +1,10 @@
 import Google from "../images/google.png";
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const Login = () => {
   const google = () => {
-    window.open("http://localhost:5000/api/auth/google", "_self");
+    window.open(`${API_URL}/api/auth/google`, "_self");
   };
 
   return (

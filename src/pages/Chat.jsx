@@ -17,6 +17,9 @@ import {
 } from "@chatscope/chat-ui-kit-react";
 import axios from "axios";
 import zoeIco from "../images/zoe.svg";
+
+const API_URL = process.env.REACT_APP_API_URL;
+
 const fake = false;
 
 const Chat = ({ user }) => {
@@ -67,7 +70,7 @@ const Chat = ({ user }) => {
         } else {
           response = await axios.post(
             // "https://ineedahint-api.onrender.com/get-reply",
-            "http://localhost:5000/get-reply",
+            `${API_URL}/get-reply`,
             chatMessages
           );
         }

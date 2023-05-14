@@ -11,31 +11,66 @@ import {
   ListItemText,
   ListItemSecondaryAction,
   IconButton,
+  Snackbar,
 } from "@mui/material";
 import { Delete as DeleteIcon } from "@mui/icons-material";
+import MuiAlert from "@mui/material/Alert";
+
+function Alert(props) {
+  return <MuiAlert elevation={6} variant="filled" {...props} />;
+}
 
 const Admin = () => {
   const [bots, setBots] = useState([]);
   const [botName, setBotName] = useState("");
+  const [open, setOpen] = useState(false);
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     fetchBots();
   }, []);
 
   const fetchBots = async () => {
-    const response = await axios.get("/api/bots");
-    setBots(response.data);
+    try {
+      const response = await axios.get(
+        `${process.env.REACT_APP_API_URL}/api/bots`
+      );
+      setBots(response.data);
+    } catch (error) {
+      setOpen(true);
+      setMessage("An error occurred while fetching bots.");
+    }
   };
 
-  const createBot = async () => {
-    await axios.post("/api/bots", { name: botName });
-    setBotName("");
-    fetchBots();
+  const createBot = async (event) => {
+    event.preventDefault();
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/bots`, {
+        name: botName,
+      });
+      setBotName("");
+      fetchBots();
+    } catch (error) {
+      setOpen(true);
+      setMessage("An error occurred while creating bot.");
+    }
   };
 
   const deleteBot = async (id) => {
-    await axios.delete(`/api/bots/${id}`);
-    fetchBots();
+    try {
+      await axios.delete(`${process.env.REACT_APP_API_URL}/api/bots/${id}`);
+      fetchBots();
+    } catch (error) {
+      setOpen(true);
+      setMessage("An error occurred while deleting bot.");
+    }
+  };
+
+  const handleClose = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+    setOpen(false);
   };
 
   return (
@@ -82,6 +117,11 @@ const Admin = () => {
           </ListItem>
         ))}
       </List>
+      <Snackbar open={open} autoHideDuration={6000} onClose={handleClose}>
+        <Alert onClose={handleClose} severity="error" sx={{ width: "100%" }}>
+          {message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };
