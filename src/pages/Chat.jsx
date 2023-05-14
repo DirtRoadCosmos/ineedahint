@@ -1,4 +1,3 @@
-import UserMenu from "../components/UserMenu";
 import { useState, useEffect, useCallback, useRef, StrictMode } from "react";
 import "@chatscope/chat-ui-kit-styles/dist/default/styles.min.css";
 import {
@@ -14,9 +13,7 @@ import {
   ConversationList,
   Conversation,
   ConversationHeader,
-  InfoButton,
   Avatar,
-  ExpansionPanel,
 } from "@chatscope/chat-ui-kit-react";
 import axios from "axios";
 import zoeIco from "../images/zoe.svg";
@@ -183,7 +180,7 @@ const Chat = ({ user }) => {
   };
 
   return (
-    <div style={{ height: "calc(100vh - 18px)", overflow: "auto" }}>
+    <div style={{ height: "80vh", overflow: "auto" }}>
       <StrictMode>
         <MainContainer>
           <Sidebar position="left" scrollable={false}>
@@ -230,9 +227,6 @@ const Chat = ({ user }) => {
                 userName="Zoe"
                 info="Active 10 mins ago"
               />
-              <ConversationHeader.Actions>
-                <UserMenu user={user} />
-              </ConversationHeader.Actions>
             </ConversationHeader>
             <MessageList
               scrollBehavior="smooth"

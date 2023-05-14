@@ -1,6 +1,9 @@
 import "./App.css";
 import Chat from "./pages/Chat";
 import Login from "./pages/Login";
+import Preferences from "./pages/Preferences";
+import Admin from "./pages/Admin";
+import Header from "./components/Header";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 
@@ -34,22 +37,31 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <div>
-        <Routes>
-          <Route
-            path="/"
-            element={user ? <Navigate to="/chat" /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/login"
-            element={user ? <Navigate to="/chat" /> : <Login />}
-          />
-          <Route
-            path="/chat"
-            element={user ? <Chat user={user} /> : <Navigate to="/login" />}
-          />
-        </Routes>
-      </div>
+      <Header user={user} setUser={setUser} />
+      <Routes>
+        <Route
+          path="/"
+          element={user ? <Navigate to="/chat" /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/chat" /> : <Login />}
+        />
+        <Route
+          path="/chat"
+          element={user ? <Chat user={user} /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/prefs"
+          element={
+            user ? <Preferences user={user} /> : <Navigate to="/login" />
+          }
+        />
+        <Route
+          path="/admin"
+          element={user ? <Admin user={user} /> : <Navigate to="/login" />}
+        />
+      </Routes>
     </BrowserRouter>
   );
 };
