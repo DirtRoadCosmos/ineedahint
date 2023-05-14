@@ -26,7 +26,7 @@ const Chat = ({ user }) => {
   console.log(user);
   const [messages, setMessages] = useState([
     {
-      message: `Hello ${user.name.givenName}! I give hints but not answers.`,
+      message: `Hello ${user.firstName}! I give hints but not answers.`,
       sentTime: "just now",
       sender: "Rainbow",
     },

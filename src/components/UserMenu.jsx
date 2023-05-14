@@ -36,7 +36,7 @@ export default function SideMenu({ user }) {
           }}
         >
           <Avatar
-            src={user.photos[0].value}
+            src={user.image}
             alt={user.displayName}
             sx={{ width: 60, height: 60 }}
           />
